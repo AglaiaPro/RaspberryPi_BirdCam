@@ -11,7 +11,7 @@ class Event(Base):
 
     id = Column(Integer, primary_key=True)
     device_id = Column(String, default='raspberry-1')
-    timestamp = Column(DateTime, default=datetime.now)
+    timestamp = Column(String)
 
     temperature = Column(Float)
     media_path = Column(String)

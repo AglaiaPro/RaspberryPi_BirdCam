@@ -15,9 +15,24 @@ class AzureClient:
             logger.error(f"upload failed")
             raise FileNotFoundError(f"{file_path} not found")
 
+        ext = os.path.splitext(file_path)[1].lower()
+
+        if ext in [".jpg", ".jpeg", ".png"]:
+            mime = "image/jpeg"
+        elif ext in [".mp4", ".mov"]:
+            mime = "video/mp4"
+        else:
+            raise ValueError(f"Unsupported file type: {ext}")
+
         url = f"{self.base_url}/media/upload"
-        with open(file_path, 'rb') as f:
-            response = requests.post(url, files={"file": ("file.jpg", f, "image/jpeg")})
+
+        with open(file_path, "rb") as f:
+            response = requests.post(
+                url,
+                files={
+                    "file": (os.path.basename(file_path), f, mime)
+                }
+            )
 
         print("STATUS:", response.status_code)
         print("RESPONSE:", response.text)

@@ -5,7 +5,8 @@ from datetime import datetime, timezone
 
 MAX_STORAGE_BYTES = 10 * 1024 * 1024 * 1024
 
-logger: logging.Logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
+
 
 class EventService:
     def __init__(self, repo, camera, temp_sensor, network, azure_client):
@@ -21,8 +22,9 @@ class EventService:
 
     def handle_motion(self):
         logger.info("motion detected")
+
         if time.time() - self.last_event_time < self.cooldown:
-            logger.debug(f"cooldown active: skipping event")
+            logger.debug("cooldown active: skipping event")
             return
 
         self.last_event_time = time.time()
@@ -38,11 +40,12 @@ class EventService:
             self._handle_offline_event(temperature)
 
     def _handle_online_event(self, temperature):
-        video_path = f"/home/pi/data/{datetime.now().timestamp()}.mp4"
-        self.camera.record_video(video_path)
-        logger.debug(f"video saved: {video_path}")
+        video_path = f"/home/eilogr/data/{datetime.now().timestamp()}.mp4"
 
         try:
+            self.camera.record_video(video_path)
+            logger.debug(f"video saved: {video_path}")
+
             file_url = self.azure.upload_media(video_path)
 
             payload = {
@@ -50,16 +53,18 @@ class EventService:
                 "temperature": temperature,
                 "timestamp": datetime.now(timezone.utc).isoformat(),
                 "file_url": file_url,
-                "event_type": "video"
+                "event_type": "video",
             }
 
             self.azure.send_telemetry(payload)
-        finally:
+
+        finally: 
             if os.path.exists(video_path):
                 os.remove(video_path)
 
     def _handle_offline_event(self, temperature):
-        image_path = f"/home/pi/data/{datetime.now().timestamp()}.jpg"
+        image_path = f"/home/eilogr/data/{datetime.now().timestamp()}.jpg"
+
         self.camera.take_photo(image_path)
         logger.debug(f"image saved: {image_path}")
 
@@ -67,7 +72,7 @@ class EventService:
             device_id=self.device_id,
             temperature=temperature,
             media_path=image_path,
-            event_type="image"
+            event_type="image",
         )
         self._cleanup_storage()
 
@@ -75,6 +80,7 @@ class EventService:
         logger.info("cleanup triggered")
         size = self._storage_size()
         logger.info(f"storage size: {size}")
+
         if size <= MAX_STORAGE_BYTES:
             return
 
